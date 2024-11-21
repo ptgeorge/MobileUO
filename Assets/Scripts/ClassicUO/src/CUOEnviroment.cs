@@ -24,9 +24,9 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 
-namespace ClassicUO
+namespace UpstreamClassicUO
 {
-    public class UpstreamCUOEnviroment
+    public class CUOEnviroment
     {
         public static Thread GameThread;
         public static float DPIScaleFactor = 1.0f;
@@ -48,8 +48,11 @@ namespace ClassicUO
         public static readonly Version Version = Assembly.GetExecutingAssembly().GetName().Version;
         public static readonly string ExecutablePath = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
     }
+}
 
-    public class CUOEnviroment : UpstreamCUOEnviroment
+namespace ClassicUO
+{
+    public class CUOEnviroment : UpstreamClassicUO.CUOEnviroment
     {
         public static string ExecutablePath = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
     }
