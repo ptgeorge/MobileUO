@@ -26,7 +26,7 @@ using System.Threading;
 
 namespace ClassicUO
 {
-    static class CUOEnviroment
+    static class UpstreamCUOEnviroment
     {
         public static Thread GameThread;
         public static float DPIScaleFactor = 1.0f;
@@ -46,6 +46,12 @@ namespace ClassicUO
                                              Environment.OSVersion.Platform != PlatformID.WinCE;
 
         public static readonly Version Version = Assembly.GetExecutingAssembly().GetName().Version;
+        public static readonly string ExecutablePath = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
+    }
+
+    static class CUOEnviroment : UpstreamCUOEnviroment
+    {
         public static string ExecutablePath = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
     }
 }
+
