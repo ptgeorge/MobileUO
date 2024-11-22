@@ -225,14 +225,23 @@ namespace ClassicUO
             ChairTable.Load();
 
             //ATTENTION: you will need to enable ALSO ultimalive server-side, or this code will have absolutely no effect!
-            UltimaLive.Enable();
+            // MobileUO: Commented out line below
+            //UltimaLive.Enable();
         }
     }
 
 
     internal static class Client
     {
-        public static GameController Game { get; private set; }
+        // MobileUO: Removed private from set
+        public static GameController Game { get; set; }
+
+        // MobileUO: Added SceneChanged and InvokeSceneChanged
+        public static event Action SceneChanged;
+        public static void InvokeSceneChanged()
+        {
+            SceneChanged?.Invoke();
+        }
 
 
         public static void Run(IPluginHost pluginHost)

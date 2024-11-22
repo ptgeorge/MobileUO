@@ -37,6 +37,8 @@ using ClassicUO.Game.Data;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.Scenes;
+// MobileUO: Added ClassicUO.Game.UI.Controls
+using ClassicUO.Game.UI.Controls;
 using ClassicUO.Game.UI.Gumps;
 using ClassicUO.Input;
 using ClassicUO.Network;
@@ -58,7 +60,8 @@ namespace ClassicUO
 {
     internal unsafe class GameController : Microsoft.Xna.Framework.Game
     {
-        private SDL_EventFilter _filter;
+        // MobileUO: Added "SDL." prefix
+        private SDL.SDL_EventFilter _filter;
 
         private bool _ignoreNextTextInput;
         private readonly float[] _intervalFixedUpdate = new float[2];
@@ -69,15 +72,22 @@ namespace ClassicUO
         private Texture2D _background;
         private bool _pluginsInitialized = false;
 
+        // MobileUO: Added Batcher and TouchScreenKeyboard
+        public UltimaBatcher2D Batcher => _uoSpriteBatch;
+        public static UnityEngine.TouchScreenKeyboard TouchScreenKeyboard;
+
         public GameController(IPluginHost pluginHost)
         {
             GraphicManager = new GraphicsDeviceManager(this);
 
+            // MobileUO: Commented out setting of PreparingDeviceSettings
+            /*
             GraphicManager.PreparingDeviceSettings += (sender, e) =>
             {
                 e.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage =
                     RenderTargetUsage.DiscardContents;
             };
+            */
 
             GraphicManager.PreferredDepthStencilFormat = DepthFormat.Depth24Stencil8;
             SetVSync(false);
@@ -108,10 +118,13 @@ namespace ClassicUO
 
         protected override void Initialize()
         {
+            // MobileUO: Commented out conditional for HiDef check+set
+	    /*
             if (GraphicManager.GraphicsDevice.Adapter.IsProfileSupported(GraphicsProfile.HiDef))
             {
                 GraphicManager.GraphicsProfile = GraphicsProfile.HiDef;
             }
+            */
 
             GraphicManager.ApplyChanges();
 
@@ -119,7 +132,8 @@ namespace ClassicUO
             _uoSpriteBatch = new UltimaBatcher2D(GraphicsDevice);
 
             _filter = HandleSdlEvent;
-            SDL_SetEventFilter(_filter, IntPtr.Zero);
+            // MobileUO: Added "SDL." prefix
+            SDL.SDL_SetEventFilter(_filter, IntPtr.Zero);
 
             base.Initialize();
         }
@@ -160,9 +174,11 @@ namespace ClassicUO
             SetWindowPositionBySettings();
         }
 
-        protected override void UnloadContent()
+        // MobileUO: Switched from protected to public
+        public override void UnloadContent()
         {
-            SDL_GetWindowBordersSize(Window.Handle, out int top, out int left, out _, out _);
+            // MobileUO: Added "SDL." prefix
+            SDL.SDL_GetWindowBordersSize(Window.Handle, out int top, out int left, out _, out _);
 
             Settings.GlobalSettings.WindowPosition = new Point(
                 Math.Max(0, Window.ClientBounds.X - left),
@@ -174,6 +190,27 @@ namespace ClassicUO
             Plugin.OnClosing();
 
             UO.Unload();
+
+            // MobileUO: Dispose related changes, see if they're still necessary
+            _scene?.Dispose();
+            AuraManager.Dispose();
+            UIManager.Dispose();
+            Texture2DCache.Dispose();
+            RenderedText.Dispose();
+            
+            // MobileUO: Force the sockets to disconnect in case they haven't already been disposed
+            // This is good practice since the Client can be quit while the socket is still active
+            if (NetClient.LoginSocket.IsDisposed == false)
+            {
+                NetClient.LoginSocket.Disconnect();
+            }
+            if (NetClient.Socket.IsDisposed == false)
+            {
+                NetClient.Socket.Disconnect();
+            }
+
+            base.UnloadContent();
+        }
 
             base.UnloadContent();
         }
@@ -208,6 +245,11 @@ namespace ClassicUO
         {
             Scene?.Dispose();
             Scene = scene;
+
+            // MobileUO: Added Client.InvokeSceneChanged
+            // Added this to be able to react to scene changes, mainly for calculating render scale factor
+            Client.InvokeSceneChanged();
+
             Scene?.Load();
         }
 
@@ -250,7 +292,8 @@ namespace ClassicUO
 
         private void SetWindowPosition(int x, int y)
         {
-            SDL_SetWindowPosition(Window.Handle, x, y);
+            // MobileUO: Added "SDL." prefix
+            SDL.SDL_SetWindowPosition(Window.Handle, x, y);
         }
 
         public void SetWindowSize(int width, int height)
@@ -272,25 +315,26 @@ namespace ClassicUO
 
         public void SetWindowBorderless(bool borderless)
         {
-            SDL_WindowFlags flags = (SDL_WindowFlags)SDL_GetWindowFlags(Window.Handle);
+            // MobileUO: Added "SDL." prefix throughout this method
+            SDL.SDL_WindowFlags flags = (SDL.SDL_WindowFlags)SDL.SDL_GetWindowFlags(Window.Handle);
 
-            if ((flags & SDL_WindowFlags.SDL_WINDOW_BORDERLESS) != 0 && borderless)
+            if ((flags & SDL.SDL_WindowFlags.SDL_WINDOW_BORDERLESS) != 0 && borderless)
+            {
+                return;
+            }
+            
+            if ((flags & SDL.SDL_WindowFlags.SDL_WINDOW_BORDERLESS) == 0 && !borderless)
             {
                 return;
             }
 
-            if ((flags & SDL_WindowFlags.SDL_WINDOW_BORDERLESS) == 0 && !borderless)
-            {
-                return;
-            }
-
-            SDL_SetWindowBordered(
+            SDL.SDL_SetWindowBordered(
                 Window.Handle,
-                borderless ? SDL_bool.SDL_FALSE : SDL_bool.SDL_TRUE
+                borderless ? SDL.SDL_bool.SDL_FALSE : SDL.SDL_bool.SDL_TRUE
             );
-            SDL_GetCurrentDisplayMode(
-                SDL_GetWindowDisplayIndex(Window.Handle),
-                out SDL_DisplayMode displayMode
+            SDL.SDL_GetCurrentDisplayMode(
+                SDL.SDL_GetWindowDisplayIndex(Window.Handle),
+                out SDL.SDL_DisplayMode displayMode
             );
 
             int width = displayMode.w;
@@ -299,15 +343,15 @@ namespace ClassicUO
             if (borderless)
             {
                 SetWindowSize(width, height);
-                SDL_GetDisplayUsableBounds(
-                    SDL_GetWindowDisplayIndex(Window.Handle),
-                    out SDL_Rect rect
+                SDL.SDL_GetDisplayUsableBounds(
+                    SDL.SDL_GetWindowDisplayIndex(Window.Handle),
+                    out SDL.SDL_Rect rect
                 );
-                SDL_SetWindowPosition(Window.Handle, rect.x, rect.y);
+                SDL.SDL_SetWindowPosition(Window.Handle, rect.x, rect.y);
             }
             else
             {
-                SDL_GetWindowBordersSize(Window.Handle, out int top, out _, out int bottom, out _);
+                SDL.SDL_GetWindowBordersSize(Window.Handle, out int top, out _, out int bottom, out _);
 
                 SetWindowSize(width, height - (top - bottom));
                 SetWindowPositionBySettings();
@@ -325,7 +369,8 @@ namespace ClassicUO
 
         public void MaximizeWindow()
         {
-            SDL_MaximizeWindow(Window.Handle);
+            // MobileUO: Added "SDL." prefix
+            SDL.SDL_MaximizeWindow(Window.Handle);
 
             GraphicManager.PreferredBackBufferWidth = Client.Game.Window.ClientBounds.Width;
             GraphicManager.PreferredBackBufferHeight = Client.Game.Window.ClientBounds.Height;
@@ -334,19 +379,22 @@ namespace ClassicUO
 
         public bool IsWindowMaximized()
         {
-            SDL_WindowFlags flags = (SDL_WindowFlags)SDL_GetWindowFlags(Window.Handle);
+            // MobileUO: Added "SDL." prefix throughout this method
+            SDL.SDL_WindowFlags flags = (SDL.SDL_WindowFlags)SDL.SDL_GetWindowFlags(Window.Handle);
 
-            return (flags & SDL_WindowFlags.SDL_WINDOW_MAXIMIZED) != 0;
+            return (flags & SDL.SDL_WindowFlags.SDL_WINDOW_MAXIMIZED) != 0;
         }
 
         public void RestoreWindow()
         {
-            SDL_RestoreWindow(Window.Handle);
+            // MobileUO: Added "SDL." prefix
+            SDL.SDL_RestoreWindow(Window.Handle);
         }
 
         public void SetWindowPositionBySettings()
         {
-            SDL_GetWindowBordersSize(Window.Handle, out int top, out int left, out _, out _);
+            // MobileUO: Added "SDL." prefix
+            SDL.SDL_GetWindowBordersSize(Window.Handle, out int top, out int left, out _, out _);
 
             if (Settings.GlobalSettings.WindowPosition.HasValue)
             {
@@ -369,7 +417,9 @@ namespace ClassicUO
             Time.Ticks = (uint)gameTime.TotalGameTime.TotalMilliseconds;
             Time.Delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            Mouse.Update();
+            // MobileUO: Switched from Mouse.Update to MouseUpdate
+            // Mouse.Update();
+            MouseUpdate();
 
             var data = NetClient.Socket.CollectAvailableData();
             var packetsCount = PacketHandlers.Handler.ParsePackets(NetClient.Socket, UO.World, data);
@@ -385,6 +435,9 @@ namespace ClassicUO
                 Scene.Update();
                 Profiler.ExitContext("Update");
             }
+
+            // MobileUO: Added UnityInputUpdate
+            UnityInputUpdate();
 
             UIManager.Update();
 
@@ -537,13 +590,14 @@ namespace ClassicUO
 
         private int HandleSdlEvent(IntPtr userData, IntPtr ptr)
         {
-            SDL_Event* sdlEvent = (SDL_Event*)ptr;
+            // MobileUO: Added "SDL." prefix throughout this method
+            SDL.SDL_Event* sdlEvent = (SDL.SDL_Event*)ptr;
 
             // Don't pass SDL events to the plugin host before the plugins are initialized
             // or the garbage collector can get screwed up
             if (_pluginsInitialized && Plugin.ProcessWndProc(sdlEvent) != 0)
             {
-                if (sdlEvent->type == SDL_EventType.SDL_MOUSEMOTION)
+                if (sdlEvent->type == SDL.SDL_EventType.SDL_MOUSEMOTION)
                 {
                     if (UO.GameCursor != null)
                     {
@@ -556,36 +610,36 @@ namespace ClassicUO
 
             switch (sdlEvent->type)
             {
-                case SDL_EventType.SDL_AUDIODEVICEADDED:
+                case SDL.SDL_EventType.SDL_AUDIODEVICEADDED:
                     Console.WriteLine("AUDIO ADDED: {0}", sdlEvent->adevice.which);
 
                     break;
 
-                case SDL_EventType.SDL_AUDIODEVICEREMOVED:
+                case SDL.SDL_EventType.SDL_AUDIODEVICEREMOVED:
                     Console.WriteLine("AUDIO REMOVED: {0}", sdlEvent->adevice.which);
 
                     break;
 
-                case SDL_EventType.SDL_WINDOWEVENT:
+                case SDL.SDL_EventType.SDL_WINDOWEVENT:
 
                     switch (sdlEvent->window.windowEvent)
                     {
-                        case SDL_WindowEventID.SDL_WINDOWEVENT_ENTER:
+                        case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_ENTER:
                             Mouse.MouseInWindow = true;
 
                             break;
 
-                        case SDL_WindowEventID.SDL_WINDOWEVENT_LEAVE:
+                        case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_LEAVE:
                             Mouse.MouseInWindow = false;
 
                             break;
 
-                        case SDL_WindowEventID.SDL_WINDOWEVENT_FOCUS_GAINED:
+                        case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_FOCUS_GAINED:
                             Plugin.OnFocusGained();
 
                             break;
 
-                        case SDL_WindowEventID.SDL_WINDOWEVENT_FOCUS_LOST:
+                        case SDL.SDL_WindowEventID.SDL_WINDOWEVENT_FOCUS_LOST:
                             Plugin.OnFocusLost();
 
                             break;
@@ -593,7 +647,7 @@ namespace ClassicUO
 
                     break;
 
-                case SDL_EventType.SDL_KEYDOWN:
+                case SDL.SDL_EventType.SDL_KEYDOWN:
 
                     Keyboard.OnKeyDown(sdlEvent->key);
 
@@ -621,7 +675,7 @@ namespace ClassicUO
 
                     break;
 
-                case SDL_EventType.SDL_KEYUP:
+                case SDL.SDL_EventType.SDL_KEYUP:
 
                     Keyboard.OnKeyUp(sdlEvent->key);
                     UIManager.KeyboardFocusControl?.InvokeKeyUp(
@@ -631,14 +685,14 @@ namespace ClassicUO
                     Scene.OnKeyUp(sdlEvent->key);
                     Plugin.ProcessHotkeys(0, 0, false);
 
-                    if (sdlEvent->key.keysym.sym == SDL_Keycode.SDLK_PRINTSCREEN)
+                    if (sdlEvent->key.keysym.sym == SDL.SDL_Keycode.SDLK_PRINTSCREEN)
                     {
                         TakeScreenshot();
                     }
 
                     break;
 
-                case SDL_EventType.SDL_TEXTINPUT:
+                case SDL.SDL_EventType.SDL_TEXTINPUT:
 
                     if (_ignoreNextTextInput)
                     {
@@ -665,7 +719,7 @@ namespace ClassicUO
 
                     break;
 
-                case SDL_EventType.SDL_MOUSEMOTION:
+                case SDL.SDL_EventType.SDL_MOUSEMOTION:
 
                     if (UO.GameCursor != null && !UO.GameCursor.AllowDrawSDLCursor)
                     {
@@ -685,7 +739,7 @@ namespace ClassicUO
 
                     break;
 
-                case SDL_EventType.SDL_MOUSEWHEEL:
+                case SDL.SDL_EventType.SDL_MOUSEWHEEL:
                     Mouse.Update();
                     bool isScrolledUp = sdlEvent->wheel.y > 0;
 
@@ -698,9 +752,9 @@ namespace ClassicUO
 
                     break;
 
-                case SDL_EventType.SDL_MOUSEBUTTONDOWN:
+                case SDL.SDL_EventType.SDL_MOUSEBUTTONDOWN:
                 {
-                    SDL_MouseButtonEvent mouse = sdlEvent->button;
+                    SDL.SDL_MouseButtonEvent mouse = sdlEvent->button;
 
                     // The values in MouseButtonType are chosen to exactly match the SDL values
                     MouseButtonType buttonType = (MouseButtonType)mouse.button;
@@ -798,9 +852,9 @@ namespace ClassicUO
                     break;
                 }
 
-                case SDL_EventType.SDL_MOUSEBUTTONUP:
+                case SDL.SDL_EventType.SDL_MOUSEBUTTONUP:
                 {
-                    SDL_MouseButtonEvent mouse = sdlEvent->button;
+                    SDL.SDL_MouseButtonEvent mouse = sdlEvent->button;
 
                     // The values in MouseButtonType are chosen to exactly match the SDL values
                     MouseButtonType buttonType = (MouseButtonType)mouse.button;
