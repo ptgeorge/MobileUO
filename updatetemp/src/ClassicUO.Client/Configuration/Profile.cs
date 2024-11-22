@@ -265,7 +265,8 @@ namespace ClassicUO.Configuration
 
         public bool PartyAura { get; set; }
 
-        public bool UseXBR { get; set; } = true;
+	// MobileUO: Switched from true to false
+        public bool UseXBR { get; set; } = false;
 
         public bool HideChatGradient { get; set; } = false;
 
@@ -564,6 +565,17 @@ namespace ClassicUO.Configuration
 
                                     break;
 
+                                // MobileUO: Added AssistantMacroButton and AssistantHotKeyButton
+                                case GumpType.AssistantMacroButton:
+                                    gump = new AssistantMacroButtonGump();
+
+	                            break;
+                                
+                                case GumpType.AssistantHotKeyButton:
+                                    gump = new AssistantHotkeyButtonGump();
+
+                                    break;
+
                                 case GumpType.MiniMap:
                                     gump = new MiniMapGump(world);
 
@@ -719,6 +731,17 @@ namespace ClassicUO.Configuration
 
                                     case GumpType.MacroButton:
                                         gump = new MacroButtonGump(world);
+
+                                        break;
+
+                                    // MobileUO: Added AssistantMacroButton and AssistantHotKeyButton
+                                    case GumpType.AssistantMacroButton:
+                                        gump = new AssistantMacroButtonGump();
+
+                                        break;
+                                
+                                    case GumpType.AssistantHotKeyButton:
+                                        gump = new AssistantHotkeyButtonGump();
 
                                         break;
                                 }
