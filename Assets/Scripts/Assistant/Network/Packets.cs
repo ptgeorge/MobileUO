@@ -7,7 +7,7 @@ using ClassicUO.Game.Data;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Network;
-using ClassicUO.IO.Resources;
+using ClassicUO.Resources;
 using ClassicUO.Utility;
 
 namespace Assistant

@@ -1,6 +1,6 @@
 ﻿using System;
 
-using ClassicUO.IO.Resources;
+using ClassicUO.Resources;
 
 namespace Assistant
 {

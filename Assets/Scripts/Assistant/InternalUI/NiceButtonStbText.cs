@@ -3,7 +3,7 @@ using System.Linq;
 using System;
 
 using ClassicUO.Input;
-using ClassicUO.IO.Resources;
+using ClassicUO.Resources;
 using ClassicUO.Renderer;
 using ClassicUO.Game.Managers;
 using ClassicUO.Utility;

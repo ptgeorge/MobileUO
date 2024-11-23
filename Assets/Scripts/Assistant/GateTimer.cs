@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-using ClassicUO.IO.Resources;
+using ClassicUO.Resources;
 
 namespace Assistant
 {

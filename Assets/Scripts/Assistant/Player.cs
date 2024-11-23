@@ -6,7 +6,7 @@ using System.Linq;
 using Assistant.Core;
 //using Assistant.Macros;
 //using Assistant.UI;
-using ClassicUO.IO.Resources;
+using ClassicUO.Resources;
 using ClassicUO.Game;
 using ClassicUO.Configuration;
 using ClassicUO.Network;

@@ -1,7 +1,7 @@
 ﻿using ClassicUO.Game;
 using ClassicUO.Network;
 using ClassicUO.Game.Managers;
-using ClassicUO.IO.Resources;
+using ClassicUO.Resources;
 using ClassicUO.Game.UI.Controls;
 using SDL2;
 
