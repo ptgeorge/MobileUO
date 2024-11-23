@@ -727,7 +727,9 @@ namespace ClassicUO
                         UO.GameCursor.Graphic = 0xFFFF;
                     }
 
-                    Mouse.Update();
+                    // MobileUO: Switched from Mouse.Update to MouseUpdate
+                    // Mouse.Update();
+                    MouseUpdate();
 
                     if (Mouse.IsDragging)
                     {
@@ -740,7 +742,9 @@ namespace ClassicUO
                     break;
 
                 case SDL.SDL_EventType.SDL_MOUSEWHEEL:
-                    Mouse.Update();
+                    // MobileUO: Switched from Mouse.Update to MouseUpdate
+                    // Mouse.Update();
+                    MouseUpdate();
                     bool isScrolledUp = sdlEvent->wheel.y > 0;
 
                     Plugin.ProcessMouse(0, sdlEvent->wheel.y);
@@ -789,7 +793,9 @@ namespace ClassicUO
                     }
 
                     Mouse.ButtonPress(buttonType);
-                    Mouse.Update();
+                    // MobileUO: Switched from Mouse.Update to MouseUpdate
+                    // Mouse.Update();
+                    MouseUpdate();
 
                     uint ticks = Time.Ticks;
 
@@ -896,7 +902,9 @@ namespace ClassicUO
                     }
 
                     Mouse.ButtonRelease(buttonType);
-                    Mouse.Update();
+                    // MobileUO: Switched from Mouse.Update to MouseUpdate
+                    // Mouse.Update();
+                    MouseUpdate();
 
                     break;
                 }
@@ -957,6 +965,454 @@ namespace ClassicUO
                 else
                 {
                     GameActions.Print(UO.World, message, 0x44, MessageType.System);
+                }
+            }
+        }
+
+	// MobileUO: Rest of file - Unity, SDL, MouseUpdate, etc
+        private readonly UnityEngine.KeyCode[] _keyCodeEnumValues = (UnityEngine.KeyCode[]) Enum.GetValues(typeof(UnityEngine.KeyCode));
+        private UnityEngine.Vector3 lastMousePosition;
+        public SDL_Keymod KeymodOverride;
+        public bool EscOverride;
+        private int zoomCounter;
+
+        private void MouseUpdate()
+        {
+            var oneOverScale = 1f / Batcher.scale;
+            
+            //Finger/mouse handling
+            if (UnityEngine.Application.isMobilePlatform && UserPreferences.UseMouseOnMobile.CurrentValue == 0)
+            {
+                var fingers = Lean.Touch.LeanTouch.GetFingers(true, false);
+
+                //Only process one finger that has not started over gui because using multiple fingers with UIManager
+                //causes issues due to the assumption that there's only one pointer, such as on finger "stealing"
+                //a dragged gump from another
+                if (fingers.Count > 0)
+                {
+                    var finger = fingers[0];
+                    
+                    var leftMouseDown = finger.Down;
+                    var leftMouseHeld = finger.Set;
+
+                    var mousePositionPoint = ConvertUnityMousePosition(finger.ScreenPosition, oneOverScale);
+                    Mouse.Position = mousePositionPoint;
+                    Mouse.LButtonPressed = leftMouseDown || leftMouseHeld;
+                    Mouse.RButtonPressed = false;
+                    Mouse.IsDragging = Mouse.LButtonPressed || Mouse.RButtonPressed;
+                    Mouse.RealPosition = Mouse.Position;
+                }
+            }
+            else
+            {
+                var leftMouseDown = UnityEngine.Input.GetMouseButtonDown(0);
+                var leftMouseHeld = UnityEngine.Input.GetMouseButton(0);
+                var rightMouseDown = UnityEngine.Input.GetMouseButtonDown(1);
+                var rightMouseHeld = UnityEngine.Input.GetMouseButton(1);
+                var mousePosition = UnityEngine.Input.mousePosition;
+
+                if (Lean.Touch.LeanTouch.PointOverGui(mousePosition))
+                {
+                    Mouse.Position.X = 0;
+                    Mouse.Position.Y = 0;
+                    leftMouseDown = false;
+                    leftMouseHeld = false;
+                    rightMouseDown = false;
+                    rightMouseHeld = false;
+                }
+                
+                var mousePositionPoint = ConvertUnityMousePosition(mousePosition, oneOverScale);
+                Mouse.Position = mousePositionPoint;
+                Mouse.LButtonPressed = leftMouseDown || leftMouseHeld;
+                Mouse.RButtonPressed = rightMouseDown || rightMouseHeld;
+                Mouse.IsDragging = Mouse.LButtonPressed || Mouse.RButtonPressed;
+                Mouse.RealPosition = Mouse.Position;
+            }
+        }
+
+        private void UnityInputUpdate()
+        {
+            var oneOverScale = 1f / Batcher.scale;
+            
+            //Finger/mouse handling
+            if (UnityEngine.Application.isMobilePlatform && UserPreferences.UseMouseOnMobile.CurrentValue == 0)
+            {
+                var fingers = Lean.Touch.LeanTouch.GetFingers(true, false);
+
+                //Detect two finger tap gesture for closing gumps, only when one of the fingers' state is Down
+                if (fingers.Count == 2 && (fingers[0].Down || fingers[1].Down))
+                {
+                    var firstMousePositionPoint = ConvertUnityMousePosition(fingers[0].ScreenPosition, oneOverScale);
+                    var secondMousePositionPoint = ConvertUnityMousePosition(fingers[1].ScreenPosition, oneOverScale);
+                    var firstControlUnderFinger = UIManager.GetMouseOverControl(firstMousePositionPoint);
+                    var secondControlUnderFinger = UIManager.GetMouseOverControl(secondMousePositionPoint);
+                    //We prefer to get the root parent but sometimes it can be null (like with GridLootGump), in which case we revert to the initially found control
+                    firstControlUnderFinger = firstControlUnderFinger?.RootParent ?? firstControlUnderFinger;
+                    secondControlUnderFinger = secondControlUnderFinger?.RootParent ?? secondControlUnderFinger;
+                    if (firstControlUnderFinger != null && firstControlUnderFinger == secondControlUnderFinger)
+                    {
+                        //Simulate right mouse down and up
+                        SimulateMouse(false, false, true, false, false, true);
+                        SimulateMouse(false, false, false, true, false, true);
+                    }
+                }
+                //Only process one finger that has not started over gui because using multiple fingers with UIManager
+                //causes issues due to the assumption that there's only one pointer, such as one finger "stealing" a
+                //dragged gump from another
+                else if (fingers.Count > 0)
+                {
+                    var finger = fingers[0];
+                    var mouseMotion = finger.ScreenPosition != finger.LastScreenPosition;
+                    SimulateMouse(finger.Down, finger.Up, false, false, mouseMotion, false);
+                }
+                
+                if (fingers.Count == 2 && ProfileManager.Current.EnableMousewheelScaleZoom && UIManager.MouseOverControl is WorldViewport)
+                {                    
+                    var scale = Lean.Touch.LeanGesture.GetPinchScale(fingers);                  
+                    if(scale < 1)
+                    {
+                        zoomCounter--;
+                    }
+                    else if(scale > 1)
+                    {
+                        zoomCounter++;
+                    }
+
+                    if(zoomCounter > 3)
+                    {
+                        zoomCounter = 0;
+                        Client.Game.GetScene<GameScene>().ZoomIn();
+                    }
+                    else if(zoomCounter < -3)
+                    {
+                        zoomCounter = 0;
+                        Client.Game.GetScene<GameScene>().ZoomOut();
+                    }
+                }
+
+            }
+            else
+            {
+                var leftMouseDown = UnityEngine.Input.GetMouseButtonDown(0);
+                var leftMouseUp = UnityEngine.Input.GetMouseButtonUp(0);
+                var rightMouseDown = UnityEngine.Input.GetMouseButtonDown(1);
+                var rightMouseUp = UnityEngine.Input.GetMouseButtonUp(1);
+                var mousePosition = UnityEngine.Input.mousePosition;
+                var mouseMotion = mousePosition != lastMousePosition;
+                lastMousePosition = mousePosition;
+                
+                if (Lean.Touch.LeanTouch.PointOverGui(mousePosition))
+                {
+                    Mouse.Position.X = 0;
+                    Mouse.Position.Y = 0;
+                    leftMouseDown = false;
+                    leftMouseUp = false;
+                    rightMouseDown = false;
+                    rightMouseUp = false;
+                }
+                
+                SimulateMouse(leftMouseDown, leftMouseUp, rightMouseDown, rightMouseUp, mouseMotion, false);
+            }
+
+            //Keyboard handling
+            var keymod = KeymodOverride;
+            if (UnityEngine.Input.GetKey(UnityEngine.KeyCode.LeftAlt))
+            {
+                keymod |= SDL_Keymod.KMOD_LALT;
+            }
+            if (UnityEngine.Input.GetKey(UnityEngine.KeyCode.RightAlt))
+            {
+                keymod |= SDL_Keymod.KMOD_RALT;
+            }
+            if (UnityEngine.Input.GetKey(UnityEngine.KeyCode.LeftShift))
+            {
+                keymod |= SDL_Keymod.KMOD_LSHIFT;
+            }
+            if (UnityEngine.Input.GetKey(UnityEngine.KeyCode.RightShift))
+            {
+                keymod |= SDL_Keymod.KMOD_RSHIFT;
+            }
+            if (UnityEngine.Input.GetKey(UnityEngine.KeyCode.LeftControl))
+            {
+                keymod |= SDL_Keymod.KMOD_LCTRL;
+            }
+            if (UnityEngine.Input.GetKey(UnityEngine.KeyCode.RightControl))
+            {
+                keymod |= SDL_Keymod.KMOD_RCTRL;
+            }
+            
+            Keyboard.Shift = (keymod & SDL_Keymod.KMOD_SHIFT) != SDL_Keymod.KMOD_NONE;
+            Keyboard.Alt = (keymod & SDL_Keymod.KMOD_ALT) != SDL_Keymod.KMOD_NONE;
+            Keyboard.Ctrl = (keymod & SDL_Keymod.KMOD_CTRL) != SDL_Keymod.KMOD_NONE;
+            
+            foreach (var keyCode in _keyCodeEnumValues)
+            {
+                var key = new SDL_KeyboardEvent {keysym = new SDL_Keysym {sym = (SDL_Keycode) keyCode, mod = keymod}};
+                if (UnityEngine.Input.GetKeyDown(keyCode))
+                {
+                    Keyboard.OnKeyDown(key);
+
+                    if (Plugin.ProcessHotkeys((int) key.keysym.sym, (int) key.keysym.mod, true))
+                    {
+                        _ignoreNextTextInput = false;
+                        UIManager.KeyboardFocusControl?.InvokeKeyDown(key.keysym.sym, key.keysym.mod);
+                        _scene.OnKeyDown(key);
+                    }
+                    else
+                        _ignoreNextTextInput = true;
+                }
+                if (UnityEngine.Input.GetKeyUp(keyCode))
+                {
+                    Keyboard.OnKeyUp(key);
+                    UIManager.KeyboardFocusControl?.InvokeKeyUp(key.keysym.sym, key.keysym.mod);
+                    _scene.OnKeyUp(key);
+                    Plugin.ProcessHotkeys(0, 0, false);
+                }
+            }
+
+            if (EscOverride)
+            {
+                EscOverride = false;
+                var key = new SDL_KeyboardEvent {keysym = new SDL_Keysym {sym = (SDL_Keycode) UnityEngine.KeyCode.Escape, mod = keymod}};
+                // if (UnityEngine.Input.GetKeyDown(KeyCode.Escape))
+                {
+                    Keyboard.OnKeyDown(key);
+
+                    if (Plugin.ProcessHotkeys((int) key.keysym.sym, (int) key.keysym.mod, true))
+                    {
+                        _ignoreNextTextInput = false;
+                        UIManager.KeyboardFocusControl?.InvokeKeyDown(key.keysym.sym, key.keysym.mod);
+                        _scene.OnKeyDown(key);
+                    }
+                    else
+                        _ignoreNextTextInput = true;
+                }
+                // if (UnityEngine.Input.GetKeyUp(KeyCode.Escape))
+                {
+                    Keyboard.OnKeyUp(key);
+                    UIManager.KeyboardFocusControl?.InvokeKeyUp(key.keysym.sym, key.keysym.mod);
+                    _scene.OnKeyUp(key);
+                    Plugin.ProcessHotkeys(0, 0, false);
+                }
+            }
+
+            //Input text handling
+            if (UnityEngine.Application.isMobilePlatform && TouchScreenKeyboard != null)
+            {
+                var text = TouchScreenKeyboard.text;
+                
+                if (_ignoreNextTextInput == false && TouchScreenKeyboard.status == UnityEngine.TouchScreenKeyboard.Status.Done)
+                {
+                    //Clear the text of TouchScreenKeyboard, otherwise it stays there and is re-evaluated every frame
+                    TouchScreenKeyboard.text = string.Empty;
+                    
+                    //Set keyboard to null so we process its text only once when its status is set to Done
+                    TouchScreenKeyboard = null;
+                    
+                    //Need to clear the existing text in textbox before "pasting" new text from TouchScreenKeyboard
+                    if (UIManager.KeyboardFocusControl is StbTextBox stbTextBox)
+                    {
+                        stbTextBox.SetText(string.Empty);
+                    }
+                    
+                    UIManager.KeyboardFocusControl?.InvokeTextInput(text);
+                    _scene.OnTextInput(text);
+                    
+                    //When targeting SystemChat textbox, "auto-press" return key so that the text entered on the TouchScreenKeyboard is submitted right away
+                    if (UIManager.KeyboardFocusControl != null && UIManager.KeyboardFocusControl == UIManager.SystemChat?.TextBoxControl)
+                    {
+                        //Handle different chat modes
+                        HandleChatMode(text);
+                        //"Press" return
+                        UIManager.KeyboardFocusControl.InvokeKeyDown(SDL_Keycode.SDLK_RETURN, SDL_Keymod.KMOD_NONE);
+                        //Revert chat mode to default
+                        UIManager.SystemChat.Mode = ChatMode.Default;
+                    }
+                }
+            }
+            else
+            {
+                var text = UnityEngine.Input.inputString;
+                //Backspace character should not be sent as text input
+                text = text.Replace("\b", "");
+                if (_ignoreNextTextInput == false && string.IsNullOrEmpty(text) == false)
+                {
+                    UIManager.KeyboardFocusControl?.InvokeTextInput(text);
+                    _scene.OnTextInput(text);
+                }
+            }
+        }
+
+        private void HandleChatMode(string text)
+        {
+            if (text.Length > 0)
+            {
+                switch (text[0])
+                {                  
+                    case '/':
+                        UIManager.SystemChat.Mode = ChatMode.Party;
+                        //Textbox text has been cleared, set it again
+                        UIManager.SystemChat.TextBoxControl.InvokeTextInput(text.Substring(1));
+                        break;
+                    case '\\':
+                        UIManager.SystemChat.Mode = ChatMode.Guild;
+                        //Textbox text has been cleared, set it again
+                        UIManager.SystemChat.TextBoxControl.InvokeTextInput(text.Substring(1));
+                        break;
+                    case '|':
+                        UIManager.SystemChat.Mode = ChatMode.Alliance;
+                        //Textbox text has been cleared, set it again
+                        UIManager.SystemChat.TextBoxControl.InvokeTextInput(text.Substring(1));
+                        break;
+                    case '-':
+                        UIManager.SystemChat.Mode = ChatMode.ClientCommand;
+                        //Textbox text has been cleared, set it again
+                        UIManager.SystemChat.TextBoxControl.InvokeTextInput(text.Substring(1));
+                        break;
+                    case ',' when UOChatManager.ChatIsEnabled == CHAT_STATUS.ENABLED:
+                        UIManager.SystemChat.Mode = ChatMode.UOChat;
+                        //Textbox text has been cleared, set it again
+                        UIManager.SystemChat.TextBoxControl.InvokeTextInput(text.Substring(1));
+                        break;
+                    case ':' when text.Length > 1 && text[1] == ' ':
+                        UIManager.SystemChat.Mode = ChatMode.Emote;
+                        //Textbox text has been cleared, set it again
+                        UIManager.SystemChat.TextBoxControl.InvokeTextInput(text.Substring(2));
+                        break;
+                    case ';' when text.Length > 1 && text[1] == ' ':
+                        UIManager.SystemChat.Mode = ChatMode.Whisper;
+                        //Textbox text has been cleared, set it again
+                        UIManager.SystemChat.TextBoxControl.InvokeTextInput(text.Substring(2));
+                        break;
+                    case '!' when text.Length > 1 && text[1] == ' ':
+                        UIManager.SystemChat.Mode = ChatMode.Yell;
+                        //Textbox text has been cleared, set it again
+                        UIManager.SystemChat.TextBoxControl.InvokeTextInput(text.Substring(2));
+                        break;
+                }
+            }
+        }
+
+        private static Point ConvertUnityMousePosition(UnityEngine.Vector2 screenPosition, float oneOverScale)
+        {
+            var x = UnityEngine.Mathf.RoundToInt(screenPosition.x * oneOverScale);
+            var y = UnityEngine.Mathf.RoundToInt((UnityEngine.Screen.height - screenPosition.y) * oneOverScale);
+            return new Point(x, y);
+        }
+
+        private void SimulateMouse(bool leftMouseDown, bool leftMouseUp, bool rightMouseDown, bool rightMouseUp, bool mouseMotion, bool skipSceneInput)
+        {
+            if (_dragStarted && !Mouse.LButtonPressed)
+            {
+                _dragStarted = false;
+            }
+            
+            if (leftMouseDown)
+            {
+                Mouse.LDropPosition = Mouse.Position;
+                Mouse.CancelDoubleClick = false;
+                uint ticks = Time.Ticks;
+                if (Mouse.LastLeftButtonClickTime + Mouse.MOUSE_DELAY_DOUBLE_CLICK >= ticks)
+                {
+                    Mouse.LastLeftButtonClickTime = 0;
+
+                    var res = false;
+                    if (skipSceneInput)
+                    {
+                        res = UIManager.OnLeftMouseDoubleClick();
+                    }
+                    else
+                    {
+                        res = _scene.OnLeftMouseDoubleClick() || UIManager.OnLeftMouseDoubleClick();
+                    }
+
+                    if (!res)
+                    {
+                        if (skipSceneInput || !_scene.OnLeftMouseDown())
+                            UIManager.OnLeftMouseButtonDown();
+                    }
+                    else
+                    {
+                        Mouse.LastLeftButtonClickTime = 0xFFFF_FFFF;
+                    }
+                }
+                else
+                {
+                    if (skipSceneInput || !_scene.OnLeftMouseDown())
+                        UIManager.OnLeftMouseButtonDown();
+                    Mouse.LastLeftButtonClickTime = Mouse.CancelDoubleClick ? 0 : ticks;
+                }
+            }
+            else if (leftMouseUp)
+            {
+                if (Mouse.LastLeftButtonClickTime != 0xFFFF_FFFF)
+                {
+                    if (skipSceneInput || !_scene.OnLeftMouseUp() || UIManager.LastControlMouseDown(MouseButtonType.Left) != null)
+                        UIManager.OnLeftMouseButtonUp();
+                }
+
+                Mouse.End();
+            }
+
+            if (rightMouseDown)
+            {
+                Mouse.RDropPosition = Mouse.Position;
+                Mouse.CancelDoubleClick = false;
+                uint ticks = Time.Ticks;
+
+                if (Mouse.LastRightButtonClickTime + Mouse.MOUSE_DELAY_DOUBLE_CLICK >= ticks)
+                {
+                    Mouse.LastRightButtonClickTime = 0;
+
+                    var res = false;
+                    if (skipSceneInput)
+                    {
+                        res = UIManager.OnRightMouseDoubleClick();
+                    }
+                    else
+                    {
+                        res = _scene.OnRightMouseDoubleClick() || UIManager.OnRightMouseDoubleClick();
+                    }
+                    
+                    if (!res)
+                    {
+                        if (skipSceneInput || !_scene.OnRightMouseDown())
+                            UIManager.OnRightMouseButtonDown();
+                    }
+                    else
+                    {
+                        Mouse.LastRightButtonClickTime = 0xFFFF_FFFF;
+                    }
+                }
+                else
+                {
+                    if (skipSceneInput || !_scene.OnRightMouseDown())
+                        UIManager.OnRightMouseButtonDown();
+                    Mouse.LastRightButtonClickTime = Mouse.CancelDoubleClick ? 0 : ticks;
+                }
+            }
+            else if (rightMouseUp)
+            {
+                if (Mouse.LastRightButtonClickTime != 0xFFFF_FFFF)
+                {
+                    if (skipSceneInput || !_scene.OnRightMouseUp())
+                        UIManager.OnRightMouseButtonUp();
+                }
+
+                Mouse.End();
+            }
+
+            if (mouseMotion)
+            {
+                if (Mouse.IsDragging)
+                {
+                    if (skipSceneInput || !_scene.OnMouseDragging())
+                        UIManager.OnMouseDragging();
+                }
+
+                if (Mouse.IsDragging && !_dragStarted)
+                {
+                    _dragStarted = true;
                 }
             }
         }
