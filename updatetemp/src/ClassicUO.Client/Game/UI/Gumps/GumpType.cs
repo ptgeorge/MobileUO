@@ -58,6 +58,10 @@ namespace ClassicUO.Game.UI.Gumps
         Debug,
         NetStats,
 
-        NameOverHeadHandler
+        NameOverHeadHandler,
+
+        // MobileUO: Added assistant macro & hot key buttons
+        AssistantMacroButton,
+        AssistantHotKeyButton,
     }
 }

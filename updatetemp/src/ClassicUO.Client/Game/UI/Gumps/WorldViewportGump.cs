@@ -55,6 +55,9 @@ namespace ClassicUO.Game.UI.Gumps
         private readonly GameScene _scene;
         private readonly SystemChatControl _systemChatControl;
 
+        // MobileUO: Added Viewport
+        public WorldViewport Viewport => _viewport;
+
         public WorldViewportGump(World world, GameScene scene) : base(world, 0, 0)
         {
             _scene = scene;
@@ -71,6 +74,14 @@ namespace ClassicUO.Game.UI.Gumps
             );
 
             _button = new Button(0, 0x837, 0x838, 0x838);
+
+            // MobileUO: Upscale resize button on mobile
+            if (UnityEngine.Application.isMobilePlatform)
+            {   
+                _button.Width *= 2;
+                _button.Height *= 2;
+                _button.ContainsByBounds = true;
+            }
 
             _button.MouseDown += (sender, e) =>
             {
@@ -142,6 +153,8 @@ namespace ClassicUO.Game.UI.Gumps
                     int w = _lastSize.X + offset.X;
                     int h = _lastSize.Y + offset.Y;
 
+                    // MobileUO: Adjust w & h to use min viewport w & h
+                    /*
                     if (w < 640)
                     {
                         w = 640;
@@ -151,6 +164,9 @@ namespace ClassicUO.Game.UI.Gumps
                     {
                         h = 480;
                     }
+                    */
+                    w = max(w, GameScene.GameScene.MinimumViewportWidth)
+                    h = max(h, GameScene.GameScene.MinimumViewportHeight)
 
                     if (w > Client.Game.Window.ClientBounds.Width - BORDER_WIDTH)
                     {
@@ -259,6 +275,8 @@ namespace ClassicUO.Game.UI.Gumps
 
         public Point ResizeGameWindow(Point newSize)
         {
+            // MobileUO: Adjust X & Y to use min viewport w & h
+            /*
             if (newSize.X < 640)
             {
                 newSize.X = 640;
@@ -268,6 +286,9 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 newSize.Y = 480;
             }
+            */
+            newSize.X = max(newSize.X, GameScene.MinimumViewportWidth)
+            newSize.Y = max(newSize.Y, GameScene.MinimumViewportHeight)
 
             //Resize();
             _lastSize = _savedSize = newSize;

@@ -54,6 +54,42 @@ namespace ClassicUO.Game.UI.Gumps
             AcceptKeyboardInput = false;
         }
 
+        // MobileUO: Added close button related variables + methods
+        private Button closeButton;
+        public static bool CloseButtonsEnabled;
+        // Make sure close button is always on top
+        protected override void OnChildAdded()
+        {   
+            UpdateCloseButton();
+        }
+
+        private void InitCloseButton()
+        {
+            if ((closeButton == null || closeButton.IsDisposed) && CloseButtonsEnabled && (CanCloseWithRightClick || CanCloseWithEsc))
+            {
+                closeButton = new Button(MOBILE_CLOSE_BUTTON_ID, 1150, 1152, 1151);
+                closeButton.Width = (int) Math.Round(closeButton.Width * 1.25f);
+                closeButton.Height = (int) Math.Round(closeButton.Height * 1.5f);
+                closeButton.ContainsByBounds = true;
+                closeButton.ButtonAction = ButtonAction.Activate;
+            }
+        }
+
+        public void UpdateCloseButton()
+        {   
+            InitCloseButton();
+            if (closeButton != null)
+            {   
+                closeButton.IsEnabled = CloseButtonsEnabled && (CanCloseWithRightClick || CanCloseWithEsc);
+                closeButton.IsVisible = closeButton.IsEnabled;
+                //Force insert closeButton, might be needed if it was somehow removed from Children in the meanwhile
+                if (closeButton.Parent != this)
+                {   
+                    closeButton.Parent = this;
+                }
+            }
+        }
+
         public World World { get; }
 
         public bool CanBeSaved => GumpType != Gumps.GumpType.None;
@@ -91,6 +127,13 @@ namespace ClassicUO.Game.UI.Gumps
             }
 
             base.Dispose();
+
+            // MobileUO: Added close button dispose
+            if (closeButton != null && closeButton.IsDisposed == false)
+            {   
+                closeButton.Dispose();
+                closeButton = null;
+            }
         }
 
 
