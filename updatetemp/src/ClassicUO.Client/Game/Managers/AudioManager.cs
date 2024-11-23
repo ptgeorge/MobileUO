@@ -317,6 +317,18 @@ namespace ClassicUO.Game.Managers
                     _currentMusic[i] = null;
                 }
             }
+            // MobileUO: Discard sounds + pool
+            foreach (var sound in _current_sounds)
+            {   
+                if (sound != null)
+                {   
+                    sound.Stop();
+                    sound.Dispose();
+                }
+            }
+            _current_sounds.Clear();
+
+            DynamicSoundEffectInstance.DisposePool();
         }
 
         public void StopWarMusic()

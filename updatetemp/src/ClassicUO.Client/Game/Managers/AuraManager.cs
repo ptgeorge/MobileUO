@@ -170,5 +170,12 @@ namespace ClassicUO.Game.Managers
         {
             _aura.Draw(batcher, x, y, hue, depth);
         }
+
+	// MobileUO: Added Dispose
+        public static void Dispose()
+        {   
+            AuraTexture?.Dispose();
+            AuraTexture = null;
+        }
     }
 }

@@ -425,8 +425,31 @@ namespace ClassicUO.Game.Managers
             {
                 s.Dispose();
             }
+
+            // MobileUO: Gumps clear + set null for mouse down controls
+            Gumps.Clear();
+            for (int i = 0; i < _mouseDownControls.Length; i++)
+            {   
+                _mouseDownControls[i] = null;
+            }
         }
 
+        // MobileUO: Added Dispose
+        public static void Dispose()
+        {   
+            GameCursor?.Dispose();
+            GameCursor = null;
+
+            _keyboardFocusControl = null;
+            _validForDClick = null;
+            _lastFocus = null;
+
+            MouseOverControl = null;
+            DraggingControl = null;
+            PopupMenu = null;
+            SystemChat = null;
+            ContextMenu = null;
+        }
 
         private static void HandleKeyboardInput()
         {
