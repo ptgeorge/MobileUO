@@ -145,7 +145,16 @@ namespace ClassicUO.Game.Scenes
             NetClient.Socket.Connected -= OnNetClientConnected;
             NetClient.Socket.Disconnected -= OnNetClientDisconnected;
 
+            // MobileUO: Force the login socket to disconnect in case it hasn't already been disposed
+            // This is good practice since the Client can be quit while the socket is still active
+            if (NetClient.LoginSocket.IsDisposed == false)
+            {   
+                NetClient.LoginSocket.Disconnect();
+            }
+
             Client.Game.UO.GameCursor.IsLoading = false;
+            // MobileUO: Add Clear call
+            UIManager.Clear();
             base.Unload();
         }
 

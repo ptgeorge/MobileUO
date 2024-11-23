@@ -101,6 +101,13 @@ namespace ClassicUO.Game.Scenes
 
         private readonly World _world;
 
+        // MobileUO: Add JoystickInput and run threshold
+        public Vector2 JoystickInput;
+        public float JoystickRunThreshold;
+        // MobileUO: Added min viewport m & h to allow the game viewport to be smaller than what CUO was allowing
+        public static int MinimumViewportWidth = 200;
+        public static int MinimumViewportHeight = 300;
+
         public GameScene(World world)
         {
             _world = world;
@@ -173,10 +180,15 @@ namespace ClassicUO.Game.Scenes
                 int w = Settings.GlobalSettings.WindowSize.Value.X;
                 int h = Settings.GlobalSettings.WindowSize.Value.Y;
 
+                // MobileUO: Switched w & h to use viewport w & h
+                /*
                 w = Math.Max(640, w);
                 h = Math.Max(480, h);
+                */
+                w = Math.Max(MinimumViewportWidth, w);
+                h = Math.Max(MinimumViewportHeight, h);
 
-                Client.Game.SetWindowSize(w, h);
+		Client.Game.SetWindowSize(w, h);
             }
 
             Plugin.OnConnected();
@@ -785,6 +797,14 @@ namespace ClassicUO.Game.Scenes
                 }
             }
 
+            // MobileUO: Joystick logic
+            if (JoystickInput != Vector2.Zero && UserPreferences.JoystickCancelsFollow.CurrentValue == (int) PreferenceEnums.JoystickCancelsFollow.On)
+            {   
+                _continueRunning = false;
+                StopFollowing();
+                World.Player.Walk(DirectionHelper.DirectionFromVectors(Vector2.Zero, JoystickInput), ProfileManager.Current.AlwaysRun || JoystickInput.Length() > JoystickRunThreshold);
+            }
+
             if (
                 _followingMode && SerialHelper.IsMobile(_followingTarget) && !_world.Player.Pathfinder.AutoWalking
             )
@@ -939,6 +959,10 @@ namespace ClassicUO.Game.Scenes
 
         public override bool Draw(UltimaBatcher2D batcher)
         {
+            // MobileUO: Revert scaling during game scene drawing
+            var originalBatcherScale = batcher.scale;
+            batcher.scale = 1f;
+
             if (!_world.InGame)
             {
                 return false;
@@ -1054,7 +1078,8 @@ namespace ClassicUO.Game.Scenes
             batcher.End();
 
             batcher.GraphicsDevice.Viewport = r_viewport;
-
+            // MobileUO: Resetting batcher.scale
+            batcher.scale = originalBatcherScale;
             return base.Draw(batcher);
         }
 
@@ -1067,6 +1092,8 @@ namespace ClassicUO.Game.Scenes
             {
                 batcher.GraphicsDevice.SetRenderTarget(_world_render_target);
                 batcher.GraphicsDevice.Clear(ClearOptions.Target, Color.Black, 0f, 0);
+                // MobileUO: This extra Clear is important, otherwise hall-of-mirrors effects can happen in areas which are not drawn, such as black tiles surrounding caves
+                batcher.GraphicsDevice.Clear(ClearOptions.Stencil | ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 0, 0);
             }
             else
             {
