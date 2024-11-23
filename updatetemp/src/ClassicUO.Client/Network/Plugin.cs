@@ -33,6 +33,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using ClassicUO.Configuration;
@@ -54,6 +55,9 @@ namespace ClassicUO.Network
 {
     internal unsafe class Plugin
     {
+        // MobileUO: Add hardcoded assistant path
+        private const string hardcodedInternalAssistantPath = "internal_assistant";
+
         [MarshalAs(UnmanagedType.FunctionPtr)]
         private OnCastSpell _castSpell;
 
@@ -182,6 +186,43 @@ namespace ClassicUO.Network
             return p;
         }
 
+        // MobileUO: Added LoadInternalAssistant
+        public static bool LoadInternalAssistant()
+        {
+            //If the plugin has already been created, don't create it again
+            if (_plugins.Any(x => x._path == hardcodedInternalAssistantPath))
+            {
+                return false;
+            }
+
+            //NOTE: Temporary fix for empty xml files created with initial version of Assistant
+            var dataPath = Path.Combine(Profile.DataPath, "Data");
+            var spellsXmlPath = Path.Combine(dataPath, "spells.xml");
+            if (File.Exists(spellsXmlPath) && File.ReadAllText(Path.Combine(Profile.DataPath, "Data", "spells.xml")).Trim().Length == 0)
+            {
+                File.Delete(spellsXmlPath);
+                File.Delete(Path.Combine(dataPath, "skills.xml"));
+                File.Delete(Path.Combine(dataPath, "bodies.xml"));
+                File.Delete(Path.Combine(dataPath, "bufficons.xml"));
+                File.Delete(Path.Combine(dataPath, "foods.xml"));
+                File.Delete(Path.Combine(dataPath, "assistant.xml"));
+                File.Delete(Path.Combine(Profile.ProfilePath, "Default.xml"));
+            }
+
+            var plugin = new Plugin(hardcodedInternalAssistantPath);
+            plugin.Load();
+
+            if (plugin.IsValid == false)
+            {
+                Log.Warn($"Invalid plugin: {plugin._path}");
+                return false;
+            }
+
+            Log.Trace($"Plugin: {plugin._path} loaded.");
+            _plugins.Add(plugin);
+            return true;
+        }
+
         public void Load()
         {
             _recv = OnPluginRecv;
@@ -199,6 +240,8 @@ namespace ClassicUO.Network
             _get_tile_data = GetTileData;
             _get_cliloc = GetCliloc;
 
+            // MobileUO: Comment out a lot of plugin logic
+            /*
             SDL.SDL_SysWMinfo info = new SDL.SDL_SysWMinfo();
             SDL.SDL_VERSION(out info.version);
             SDL.SDL_GetWindowWMInfo(Client.Game.Window.Handle, ref info);
@@ -421,6 +464,47 @@ namespace ClassicUO.Network
             {
                 _on_wnd_proc = Marshal.GetDelegateForFunctionPointer<OnWndProc>(header.OnWndProc);
             }
+            */
+
+            // MobileUO: Assistant logic
+#if ENABLE_INTERNAL_ASSISTANT
+            if (_path == hardcodedInternalAssistantPath)
+            {   
+                try
+                {   
+                    Assistant.Engine.Install(null);
+
+                    Assistant.Engine.UOSteamClient._sendToClient = OnPluginRecv;
+                    Assistant.Engine.UOSteamClient._sendToServer = OnPluginSend;
+                    Assistant.Engine.UOSteamClient._getPacketLength = PacketsTable.GetPacketLength;
+                    Assistant.Engine.UOSteamClient._getPlayerPosition = GetPlayerPosition;
+                    Assistant.Engine.UOSteamClient._castSpell = GameActions.CastSpell;
+                    Assistant.Engine.UOSteamClient._getStaticImage = GetStaticImage;
+                    Assistant.Engine.UOSteamClient._requestMove = RequestMove;
+                    Assistant.Engine.UOSteamClient._setTitle = SetWindowTitle;
+                    Assistant.Engine.UOSteamClient._uoFilePath = GetUOFilePath;
+
+                    _onRecv = Assistant.Engine.UOSteamClient._recv;
+                    _onSend = Assistant.Engine.UOSteamClient._send;
+                    _onHotkeyPressed = Assistant.Engine.UOSteamClient._onHotkeyPressed;
+                    _onMouse = Assistant.Engine.UOSteamClient._onMouse;
+                    _onUpdatePlayerPosition = Assistant.Engine.UOSteamClient._onUpdatePlayerPosition;
+                    _onClientClose = Assistant.Engine.UOSteamClient._onClientClose;
+                    _onInitialize = Assistant.Engine.UOSteamClient._onInitialize;
+                    _onConnected = Assistant.Engine.UOSteamClient._onConnected;
+                    _onDisconnected = Assistant.Engine.UOSteamClient._onDisconnected;
+                    _onFocusGained = Assistant.Engine.UOSteamClient._onFocusGained;
+                    _onFocusLost = Assistant.Engine.UOSteamClient._onFocusLost;
+                    _tick = Assistant.Engine.UOSteamClient._tick;
+                }
+                catch (Exception err)
+                {   
+                        $"Plugin threw an error during Initialization. {err.Message} {err.StackTrace} {err.InnerException?.Message} {err.InnerException?.StackTrace}");
+
+                    return;
+                }
+            }
+#endif
 
             IsValid = true;
 
