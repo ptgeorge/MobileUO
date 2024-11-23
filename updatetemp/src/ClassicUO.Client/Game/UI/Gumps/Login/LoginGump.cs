@@ -321,6 +321,9 @@ namespace ClassicUO.Game.UI.Gumps.Login
             }
 
 
+            // MobileUO: Upscale arrow button on mobile
+            UpscaleNextArrow();
+
             // Account Text Input Background
             Add
             (
@@ -515,6 +518,21 @@ namespace ClassicUO.Game.UI.Gumps.Login
             }
         }
 
+        // MobileUO: Added UpscaleNextArrow
+        private void UpscaleNextArrow()
+        {   
+            // Use a size threshold because for some servers or client versions, the next arrow is actually a Login
+            // button and due to its size and position on screen, it doesn't make sense to scale it
+            const int sizeThreshold = 30;
+            if (UnityEngine.Application.isMobilePlatform && _nextArrow0.Width < sizeThreshold && _nextArrow0.Height < sizeThreshold)
+            {   
+                const float upscaleFactor = 1.5f;
+                _nextArrow0.Width = UnityEngine.Mathf.RoundToInt(_nextArrow0.Width * upscaleFactor);
+                _nextArrow0.Height = UnityEngine.Mathf.RoundToInt(_nextArrow0.Height * upscaleFactor);
+                _nextArrow0.ContainsByBounds = true;
+            }
+        }
+
         public override void OnKeyboardReturn(int textID, string text)
         {
             SaveCheckboxStatus();
@@ -546,6 +564,8 @@ namespace ClassicUO.Game.UI.Gumps.Login
                 _time = (float)Time.Ticks + 1000;
 
                 _nextArrow0.ButtonGraphicNormal = _nextArrow0.ButtonGraphicNormal == _buttonNormal ? _buttonOver : _buttonNormal;
+                // MobileUO: Setting ButtonGraphicNormal resets the button's Width and Height so we need to apply the upscaling again
+                UpscaleNextArrow();
             }
 
             if (_passwordFake.HasKeyboardFocus)
@@ -599,7 +619,8 @@ namespace ClassicUO.Game.UI.Gumps.Login
             }
         }
 
-        private class PasswordStbTextBox : StbTextBox
+        // MobileUO: Switched private to public
+        public class PasswordStbTextBox : StbTextBox
         {
             private new Point _caretScreenPosition;
             private new readonly RenderedText _rendererCaret;
@@ -753,7 +774,8 @@ namespace ClassicUO.Game.UI.Gumps.Login
         }
 
 
-        private enum Buttons
+        // MobileUO: Switched private to public
+        public enum Buttons
         {
             NextArrow,
             Quit,
