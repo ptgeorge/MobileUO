@@ -41,9 +41,10 @@ namespace ClassicUO.Input
 
         public static SDL.SDL_Keymod IgnoreKeyMod { get; } = SDL.SDL_Keymod.KMOD_CAPS | SDL.SDL_Keymod.KMOD_NUM | SDL.SDL_Keymod.KMOD_MODE | SDL.SDL_Keymod.KMOD_RESERVED;
 
-        public static bool Alt { get; private set; }
-        public static bool Shift { get; private set; }
-        public static bool Ctrl { get; private set; }
+        // MobileUO: Removed private from set of Alt, Shift, & Ctrl
+        public static bool Alt { get; set; }
+        public static bool Shift { get; set; }
+        public static bool Ctrl { get; set; }
 
 
         //public static bool IsKeyPressed(SDL.SDL_Keycode code)
