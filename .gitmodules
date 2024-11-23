@@ -3,3 +3,6 @@
 	url = https://github.com/ClassicUO/ClassicUO.git
 	# commit = 303c2ae699ca02caa6b09fbe5fbcb0c92f8bbd68
 
+[submodule "external/FNA"]
+	path = external/FNA
+	url = https://github.com/FNA-XNA/FNA.git
