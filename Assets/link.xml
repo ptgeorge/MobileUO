@@ -9,9 +9,9 @@
         <type fullname="System.ComponentModel*" preserve="all"/>
     </assembly>
     <assembly fullname="Assembly-CSharp">
-        <type fullname="ClassicUO.Configuration.Profile" preserve="all"/>
+        <type fullname="ClassicUO.Client.Configuration.Profile" preserve="all"/>
     </assembly>
     <assembly fullname="Assembly-CSharp">
-        <type fullname="ClassicUO.Configuration.Settings" preserve="all"/>
+        <type fullname="ClassicUO.Client.Configuration.Settings" preserve="all"/>
     </assembly>
 </linker>
