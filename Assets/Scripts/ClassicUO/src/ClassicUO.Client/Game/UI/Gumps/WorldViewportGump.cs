@@ -165,8 +165,8 @@ namespace ClassicUO.Game.UI.Gumps
                         h = 480;
                     }
                     */
-                    w = max(w, GameScene.GameScene.MinimumViewportWidth)
-                    h = max(h, GameScene.GameScene.MinimumViewportHeight)
+                    w = max(w, GameScene.GameScene.MinimumViewportWidth);
+                    h = max(h, GameScene.GameScene.MinimumViewportHeight);
 
                     if (w > Client.Game.Window.ClientBounds.Width - BORDER_WIDTH)
                     {
@@ -287,8 +287,8 @@ namespace ClassicUO.Game.UI.Gumps
                 newSize.Y = 480;
             }
             */
-            newSize.X = max(newSize.X, GameScene.MinimumViewportWidth)
-            newSize.Y = max(newSize.Y, GameScene.MinimumViewportHeight)
+            newSize.X = max(newSize.X, GameScene.MinimumViewportWidth);
+            newSize.Y = max(newSize.Y, GameScene.MinimumViewportHeight);
 
             //Resize();
             _lastSize = _savedSize = newSize;

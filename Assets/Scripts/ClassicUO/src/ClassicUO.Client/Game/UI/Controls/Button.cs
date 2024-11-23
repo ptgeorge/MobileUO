@@ -224,7 +224,7 @@ namespace ClassicUO.Game.UI.Controls
         // MobileUO: Added Update
         public override void Update()
         {
-            base.Update()
+            base.Update();
             // For enlarging small buttons in MobileUO
             ToggleSize(UserPreferences.EnlargeSmallButtons.CurrentValue == (int) PreferenceEnums.EnlargeSmallButtons.On);
         }

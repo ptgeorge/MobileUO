@@ -79,7 +79,8 @@ namespace ClassicUO.Assets
         //         ? Rectangle.Empty
         //         : _spriteInfos[index + 0x4000].ArtBounds;
 
-        private static uint[] LoadLand(UOFile file, ref readonly UOFileIndex entry, out short width, out short height)
+        // MobileUO: Removed readonly from entry
+        private static uint[] LoadLand(UOFile file, ref UOFileIndex entry, out short width, out short height)
         {
             if (entry.Length == 0)
             {
@@ -125,7 +126,8 @@ namespace ClassicUO.Assets
             return data;
         }
 
-        private static unsafe uint[] LoadArt(UOFile file, ref readonly UOFileIndex entry, out short width, out short height)
+        // MobileUO: Removed readonly from entry
+        private static unsafe uint[] LoadArt(UOFile file, ref UOFileIndex entry, out short width, out short height)
         {
             if (entry.Length == 0)
             {

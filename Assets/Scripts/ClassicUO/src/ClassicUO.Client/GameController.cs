@@ -212,9 +212,6 @@ namespace ClassicUO
             base.UnloadContent();
         }
 
-            base.UnloadContent();
-        }
-
         public void SetWindowTitle(string title)
         {
             if (string.IsNullOrEmpty(title))

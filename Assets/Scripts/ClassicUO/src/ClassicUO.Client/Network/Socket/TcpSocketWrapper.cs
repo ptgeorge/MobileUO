@@ -3,94 +3,96 @@ using System.Net;
 using System.Net.Sockets;
 using ClassicUO.Utility.Logging;
 
-namespace ClassicUO.Network.Socket;
-
-sealed class TcpSocketWrapper : SocketWrapper
+// MobileUO: Unity cannot use file-scoped namespaces
+namespace ClassicUO.Network.Socket
 {
-    private TcpClient _socket;
-
-    public override bool IsConnected => _socket?.Client?.Connected ?? false;
-
-    public override EndPoint LocalEndPoint => _socket?.Client?.LocalEndPoint;
-
-
-    public override void Connect(Uri uri)
+    sealed class TcpSocketWrapper : SocketWrapper
     {
-        if (IsConnected)
-            return;
+        private TcpClient _socket;
 
-        _socket = new TcpClient();
-        _socket.NoDelay = true;
+        public override bool IsConnected => _socket?.Client?.Connected ?? false;
 
-        try
+        public override EndPoint LocalEndPoint => _socket?.Client?.LocalEndPoint;
+
+
+        public override void Connect(Uri uri)
         {
-            _socket.Connect(uri.Host, uri.Port);
-
-            if (!IsConnected)
-            {
-                InvokeOnError(SocketError.NotConnected);
-
+            if (IsConnected)
                 return;
-            }
 
-            InvokeOnConnected();
-        }
-        catch (SocketException socketEx)
-        {
-            Log.Error($"error while connecting {socketEx}");
-            InvokeOnError(socketEx.SocketErrorCode);
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"error while connecting {ex}");
-            InvokeOnError(SocketError.SocketError);
-        }
-    }
+            _socket = new TcpClient();
+            _socket.NoDelay = true;
 
-    public override void Send(byte[] buffer, int offset, int count)
-    {
-        var stream = _socket.GetStream();
-        stream.Write(buffer, offset, count);
-        stream.Flush();
-    }
-
-    public override int Read(byte[] buffer)
-    {
-        if (!IsConnected)
-            return 0;
-
-        var available = Math.Min(buffer.Length, _socket.Available);
-        var done = 0;
-
-        var stream = _socket.GetStream();
-
-        while (done < available)
-        {
-            var toRead = Math.Min(buffer.Length, available - done);
-            var read = stream.Read(buffer, done, toRead);
-
-            if (read <= 0)
+            try
             {
-                InvokeOnDisconnected();
-                Disconnect();
+                _socket.Connect(uri.Host, uri.Port);
 
-                return 0;
+                if (!IsConnected)
+                {
+                    InvokeOnError(SocketError.NotConnected);
+
+                    return;
+                }
+
+                InvokeOnConnected();
             }
-
-            done += read;
+            catch (SocketException socketEx)
+            {
+                Log.Error($"error while connecting {socketEx}");
+                InvokeOnError(socketEx.SocketErrorCode);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"error while connecting {ex}");
+                InvokeOnError(SocketError.SocketError);
+            }
         }
 
-        return done;
-    }
+        public override void Send(byte[] buffer, int offset, int count)
+        {
+            var stream = _socket.GetStream();
+            stream.Write(buffer, offset, count);
+            stream.Flush();
+        }
 
-    public override void Disconnect()
-    {
-        _socket?.Close();
-        Dispose();
-    }
+        public override int Read(byte[] buffer)
+        {
+            if (!IsConnected)
+                return 0;
 
-    public override void Dispose()
-    {
-        _socket?.Dispose();
+            var available = Math.Min(buffer.Length, _socket.Available);
+            var done = 0;
+
+            var stream = _socket.GetStream();
+
+            while (done < available)
+            {
+                var toRead = Math.Min(buffer.Length, available - done);
+                var read = stream.Read(buffer, done, toRead);
+
+                if (read <= 0)
+                {
+                    InvokeOnDisconnected();
+                    Disconnect();
+
+                    return 0;
+                }
+
+                done += read;
+            }
+
+            return done;
+        }
+
+        public override void Disconnect()
+        {
+            _socket?.Close();
+            Dispose();
+        }
+
+        public override void Dispose()
+        {
+            _socket?.Dispose();
+        }
     }
 }
