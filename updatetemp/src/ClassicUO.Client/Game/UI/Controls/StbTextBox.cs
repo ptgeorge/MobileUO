@@ -38,6 +38,7 @@ using ClassicUO.Input;
 using ClassicUO.Assets;
 using ClassicUO.Renderer;
 using ClassicUO.Utility;
+using ClassicUO.Game.UI.Gumps.Login;
 using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework;
 using SDL2;
@@ -1005,6 +1006,15 @@ namespace ClassicUO.Game.UI.Controls
 
                 Stb.Click(Mouse.Position.X, Mouse.Position.Y);
                 UpdateCaretScreenPosition();
+            }
+
+            // MobileUO: Added Unity + mobile platform check for touchscreen handling
+            if (UnityEngine.Application.isMobilePlatform && IsEditable &&
+                UserPreferences.DisableTouchscreenKeyboardOnMobile.CurrentValue == (int) PreferenceEnums.DisableTouchscreenKeyboardOnMobile.Off)
+            {   
+                // Show touchscreen keyboard when abstract text box is selected
+                GameController.TouchScreenKeyboard = UnityEngine.TouchScreenKeyboard.Open(_stb.text,
+                    UnityEngine.TouchScreenKeyboardType.Default, false, Multiline, this is LoginGump.PasswordStbTextBox);
             }
 
             base.OnMouseDown(x, y, button);

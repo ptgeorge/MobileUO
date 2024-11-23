@@ -57,6 +57,36 @@ namespace ClassicUO.Game.UI.Controls
             _pressed,
             _over;
 
+        // MobileUO: Added enlarged, small button threshold, and ToggleSize
+        // For enlarging small buttons
+        private bool enlarged;
+        private const int smallButtonThreshold = 12;
+
+        public void ToggleSize(bool enlarge)
+        {   
+            if (enlarged == false && Width > smallButtonThreshold && Height > smallButtonThreshold)
+            {   
+                return;
+            }
+
+            if (enlarged && enlarge == false)
+            {   
+                Width /= 2;
+                Height /= 2;
+                X += Width / 2;
+                Y += Height / 2;
+                enlarged = false;
+            }
+            else if (enlarged == false && enlarge)
+            {   
+                Width *= 2;
+                Height *= 2;
+                X -= Width / 4;
+                Y -= Height / 4;
+                enlarged = true;
+            }
+        }
+
         public Button(
             int buttonID,
             ushort normal,
@@ -190,6 +220,14 @@ namespace ClassicUO.Game.UI.Controls
         public bool FontCenter { get; set; }
 
         public bool ContainsByBounds { get; set; }
+
+        // MobileUO: Added Update
+        public override void Update()
+        {
+            base.Update()
+            // For enlarging small buttons in MobileUO
+            ToggleSize(UserPreferences.EnlargeSmallButtons.CurrentValue == (int) PreferenceEnums.EnlargeSmallButtons.On);
+        }
 
         protected override void OnMouseEnter(int x, int y)
         {

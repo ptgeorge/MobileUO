@@ -47,6 +47,20 @@ namespace ClassicUO.Game.UI.Controls
         private ushort _inactive,
             _active;
 
+        // MobileUO: Added Hue, for Assistant
+        public ushort Hue
+        {   
+            get => _text.Hue;
+            set
+            {   
+                if (_text.Hue != value)
+                {   
+                    _text.Hue = value;
+                    _text.CreateTexture();
+                }
+            }
+        }
+
         public Checkbox(
             ushort inactive,
             ushort active,

@@ -57,6 +57,10 @@ namespace ClassicUO.Game.UI.Controls
         private Point _offset;
         private Control _parent;
 
+        // MobileUO: Added close button ID and forward mouse events to
+        protected const int MOBILE_CLOSE_BUTTON_ID = -9999;
+        public Control ControlToForwardMouseEventsTo;
+
         protected Control(Control parent = null)
         {
             Parent = parent;
@@ -525,6 +529,11 @@ namespace ClassicUO.Game.UI.Controls
         {
             foreach (Control c in Children)
             {
+                // MobileUO: Prevent mobile close buttons from being disposed
+                if (IsMobileCloseButton())
+                {   
+                    continue;
+                }
                 c.Dispose();
             }
         }
@@ -546,6 +555,8 @@ namespace ClassicUO.Game.UI.Controls
             int y = position.Y - Y - ParentY;
             OnMouseDown(x, y, button);
             MouseDown.Raise(new MouseEventArgs(x, y, button, ButtonState.Pressed), this);
+            // MobileUO: Added mouse forward event
+            ControlToForwardMouseEventsTo?.InvokeMouseDown(position, button);
         }
 
         public void InvokeMouseUp(Point position, MouseButtonType button)
@@ -554,6 +565,8 @@ namespace ClassicUO.Game.UI.Controls
             int y = position.Y - Y - ParentY;
             OnMouseUp(x, y, button);
             MouseUp.Raise(new MouseEventArgs(x, y, button), this);
+            // MobileUO: Added mouse forward event
+            ControlToForwardMouseEventsTo?.InvokeMouseUp(position, button);
         }
 
         public void InvokeMouseCloseGumpWithRClick()
@@ -562,6 +575,9 @@ namespace ClassicUO.Game.UI.Controls
             {
                 CloseWithRightClick();
             }
+
+            // MobileUO: Added mouse forward event
+            ControlToForwardMouseEventsTo?.InvokeMouseCloseGumpWithRClick();
         }
 
         public void InvokeMouseOver(Point position)
@@ -570,6 +586,8 @@ namespace ClassicUO.Game.UI.Controls
             int y = position.Y - Y - ParentY;
             OnMouseOver(x, y);
             MouseOver.Raise(new MouseEventArgs(x, y), this);
+            // MobileUO: Added mouse forward event
+            ControlToForwardMouseEventsTo?.InvokeMouseOver(position);
         }
 
         public void InvokeMouseEnter(Point position)
@@ -578,6 +596,8 @@ namespace ClassicUO.Game.UI.Controls
             int y = position.Y - Y - ParentY;
             OnMouseEnter(x, y);
             MouseEnter.Raise(new MouseEventArgs(x, y), this);
+            // MobileUO: Added mouse forward event
+            ControlToForwardMouseEventsTo?.InvokeMouseOver(position);
         }
 
         public void InvokeMouseExit(Point position)
@@ -586,6 +606,8 @@ namespace ClassicUO.Game.UI.Controls
             int y = position.Y - Y - ParentY;
             OnMouseExit(x, y);
             MouseExit.Raise(new MouseEventArgs(x, y), this);
+            // MobileUO: Added mouse forward event
+            ControlToForwardMouseEventsTo?.InvokeMouseExit(position);
         }
 
         public bool InvokeMouseDoubleClick(Point position, MouseButtonType button)
@@ -597,6 +619,9 @@ namespace ClassicUO.Game.UI.Controls
             MouseDoubleClickEventArgs arg = new MouseDoubleClickEventArgs(x, y, button);
             MouseDoubleClick.Raise(arg, this);
             result |= arg.Result;
+
+            // MobileUO: Added mouse forward event
+            ControlToForwardMouseEventsTo?.InvokeMouseDoubleClick(position, button);
 
             return result;
         }
@@ -624,6 +649,8 @@ namespace ClassicUO.Game.UI.Controls
         {
             OnMouseWheel(delta);
             MouseWheel.Raise(new MouseWheelEventArgs(delta), this);
+            // MobileUO: Added mouse forward event
+            ControlToForwardMouseEventsTo?.InvokeMouseWheel(delta);
         }
 
         public void InvokeDragBegin(Point position)
@@ -802,6 +829,11 @@ namespace ClassicUO.Game.UI.Controls
 
         public virtual void OnButtonClick(int buttonID)
         {
+            // MobileUO: Mobile close button functionality
+            if (buttonID == MOBILE_CLOSE_BUTTON_ID)
+            {   
+                Parent?.CloseWithRightClick();
+            }
             Parent?.OnButtonClick(buttonID);
         }
 
@@ -833,6 +865,12 @@ namespace ClassicUO.Game.UI.Controls
             } 
 
             IsDisposed = true;
+        }
+
+	// MobileUO: Added IsMobileCloseButton
+        public bool IsMobileCloseButton()
+        {   
+            return this is Button button && button.ButtonID == MOBILE_CLOSE_BUTTON_ID;
         }
     }
 }
