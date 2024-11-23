@@ -118,6 +118,9 @@ namespace ClassicUO.Configuration
 
         [JsonPropertyName("plugins")] public string[] Plugins { get; set; } = { @"./Assistant/Razor.dll" };
 
+	// MobileUO: Added EnableInternalAssistant
+        [JsonProperty("internal_assistant")] public bool EnableInternalAssistant { get; set; } = true;
+
         public static string GetSettingsFilepath()
         {
             if (CustomSettingsFilepath != null)

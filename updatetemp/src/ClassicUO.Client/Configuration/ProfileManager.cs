@@ -40,6 +40,8 @@ namespace ClassicUO.Configuration
     {
         public static Profile CurrentProfile { get; private set; }
         public static string ProfilePath { get; private set; }
+        // MobileUO: Added ProfileLoaded
+        public static System.Action ProfileLoaded;
 
         public static void Load(string servername, string username, string charactername)
         {
@@ -65,6 +67,8 @@ namespace ClassicUO.Configuration
             CurrentProfile.CharacterName = charactername;
 
             ValidateFields(CurrentProfile);
+            // MobileUO: Added Invoke call
+            ProfileLoaded?.Invoke();
         }
 
 
