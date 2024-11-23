@@ -21,6 +21,7 @@
 
 using Assistant;
 using Assistant.Scripts;
+using ClassicUO.Assets;
 using ClassicUO.Configuration;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.UI.Controls;
@@ -922,9 +923,9 @@ namespace ClassicUO.Game.UI.Gumps
         }
 
         private static bool _updated = false;
-        public override void Update(double totalMS, double frameMS)
+        public override void Update()
         {
-            base.Update(totalMS, frameMS);
+            base.Update();
             if(!_updated)
             {
                 _updated = true;

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Xml;
 
 using ClassicUO;
+using ClassicUO.Assets;
 using ClassicUO.Configuration;
 using ClassicUO.Utility.Logging;
 using ClassicUO.Game;

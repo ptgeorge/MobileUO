@@ -40,7 +40,7 @@ namespace ClassicUO.Game.UI.Gumps
             AnchorType = ANCHOR_TYPE.SPELL;
         }
 
-        public override GUMP_TYPE GumpType => GUMP_TYPE.GT_ASSISTANTMACROBUTTON;
+        public override GumpType GumpType => GumpType.AssistantMacroButtonGump;
 
         private void BuildGump()
         {

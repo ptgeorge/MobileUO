@@ -4,6 +4,7 @@ using System.Collections.Generic;
 //TODO: Agents
 //using Assistant.Agents;
 
+using ClassicUO.Assets;
 using ClassicUO.Resources;
 using ClassicUO.Game;
 

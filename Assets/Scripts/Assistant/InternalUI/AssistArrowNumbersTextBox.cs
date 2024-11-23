@@ -113,7 +113,7 @@ namespace ClassicUO.Game.UI.Controls
             _textBox.SetText(val.ToString());
         }
 
-        public override void Update(double totalMS, double frameMS)
+        public override void Update()
         {
             if (IsDisposed)
                 return;
@@ -129,7 +129,7 @@ namespace ClassicUO.Game.UI.Controls
                 _timeUntilNextClick -= (float)frameMS;
             }
 
-            base.Update(totalMS, frameMS);
+            base.Update();
         }
     }
 }

@@ -40,7 +40,7 @@ namespace ClassicUO.Game.UI.Gumps
             AnchorType = ANCHOR_TYPE.SPELL;
         }
 
-        public override GUMP_TYPE GumpType => GUMP_TYPE.GT_ASSISTANTHOTKEYBUTTON;
+        public override GumpType GumpType => GumpType.AssistantHotkeyButtonGump;
 
         private void BuildGump()
         {

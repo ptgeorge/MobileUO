@@ -101,7 +101,7 @@ namespace ClassicUO.Game.UI.Controls
 
         public event EventHandler ValueChanged;
 
-        public override void Update(double totalMS, double frameMS)
+        public override void Update()
         {
             for (int i = 0; i < _textures.Length; i++)
             {
@@ -111,7 +111,7 @@ namespace ClassicUO.Game.UI.Controls
                     t.Ticks = (long) totalMS;
             }
 
-            base.Update(totalMS, frameMS);
+            base.Update();
         }
 
         public override bool Draw(UltimaBatcher2D batcher, int x, int y)

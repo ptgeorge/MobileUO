@@ -1,4 +1,5 @@
-﻿using ClassicUO.Input;
+﻿using ClassicUO.Assets;
+using ClassicUO.Input;
 using ClassicUO.Resources;
 using ClassicUO.Renderer;
 using Microsoft.Xna.Framework;
