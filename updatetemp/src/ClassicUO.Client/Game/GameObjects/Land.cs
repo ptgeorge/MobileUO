@@ -266,5 +266,16 @@ namespace ClassicUO.Game.GameObjects
 
             return true;
         }
+
+	// MobileUO: Added Dispose
+        public static void Dispose()
+        {   
+            foreach (var land in _pool._pool)
+            {   
+                land.Clear();
+                land.RemoveFromTile();
+                land.TextContainer?.Clear();
+            }
+        }
     }
 }
