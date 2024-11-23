@@ -798,5 +798,11 @@ namespace ClassicUO.Game
                 Height;
             public readonly IntPtr CursorPtr;
         }
+
+	// MobileUO: Added Dispose
+        public void Dispose()
+        {   
+            _aura?.Dispose();
+        }
     }
 }

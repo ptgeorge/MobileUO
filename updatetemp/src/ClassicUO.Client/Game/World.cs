@@ -848,6 +848,8 @@ namespace ClassicUO.Game
             ActiveSpellIcons.Clear();
 
             SkillsRequested = false;
+            // MobileUO: Added Dispose call
+            Land.Dispose();
         }
 
         private void InternalMapChangeClear(bool noplayer)
