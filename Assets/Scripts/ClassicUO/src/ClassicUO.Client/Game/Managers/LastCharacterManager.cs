@@ -44,9 +44,10 @@ using ClassicUO.Utility.Logging;
 
 namespace ClassicUO.Game.Managers
 {
+    // MobileUO: Drop : JsonSerailizerContext due to compilation error
     [JsonSerializable(typeof(LastCharacterInfo))]
     [JsonSerializable(typeof(List<LastCharacterInfo>))]
-    sealed partial class LastCharacterJsonContext : JsonSerializerContext { }
+    sealed partial class LastCharacterJsonContext { } // : JsonSerializerContext { }
 
     public static class LastCharacterManager
     {

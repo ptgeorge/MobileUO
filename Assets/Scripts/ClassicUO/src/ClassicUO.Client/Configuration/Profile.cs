@@ -49,8 +49,9 @@ using Microsoft.Xna.Framework;
 namespace ClassicUO.Configuration
 {
     //[JsonSourceGenerationOptions(WriteIndented = true, PropertyNamingPolicy = JsonKnownNamingPolicy.Unspecified)]
+    // MobileUO: Drop : JsonSerailizerContext due to compilation error
     [JsonSerializable(typeof(Profile), GenerationMode = JsonSourceGenerationMode.Metadata)]
-    sealed partial class ProfileJsonContext : JsonSerializerContext
+    sealed partial class ProfileJsonContext // : JsonSerializerContext
     {
         sealed class SnakeCaseNamingPolicy : JsonNamingPolicy
         {

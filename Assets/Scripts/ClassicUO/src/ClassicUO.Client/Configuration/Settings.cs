@@ -39,9 +39,10 @@ using Microsoft.Xna.Framework;
 
 namespace ClassicUO.Configuration
 {
+    // MobileUO: Drop : JsonSerailizerContext due to compilation error
     [JsonSourceGenerationOptions(WriteIndented = true, GenerationMode = JsonSourceGenerationMode.Metadata)]
     [JsonSerializable(typeof(Settings), GenerationMode = JsonSourceGenerationMode.Metadata)]
-    sealed partial class SettingsJsonContext : JsonSerializerContext 
+    sealed partial class SettingsJsonContext // : JsonSerializerContext 
     {
         // horrible fix: https://github.com/ClassicUO/ClassicUO/issues/1663
         public static SettingsJsonContext RealDefault { get; } = new SettingsJsonContext(
@@ -119,7 +120,7 @@ namespace ClassicUO.Configuration
         [JsonPropertyName("plugins")] public string[] Plugins { get; set; } = { @"./Assistant/Razor.dll" };
 
 	// MobileUO: Added EnableInternalAssistant
-        [JsonProperty("internal_assistant")] public bool EnableInternalAssistant { get; set; } = true;
+        [JsonPropertyName("internal_assistant")] public bool EnableInternalAssistant { get; set; } = true;
 
         public static string GetSettingsFilepath()
         {
