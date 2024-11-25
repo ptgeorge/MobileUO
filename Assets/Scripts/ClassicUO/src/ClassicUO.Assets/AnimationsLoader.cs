@@ -1749,15 +1749,19 @@ namespace ClassicUO.Assets
         }
     }
 
+    // MobileUO: Switched to fixed since InlineArray is C#12
+    /*
     [InlineArray(AnimationsLoader.MAX_ACTIONS)]
     struct ReplacedAnimArray
     {
         private int _a;
     }
+    */
 
     struct UopInfo
     {
-        public ReplacedAnimArray ReplacedAnimations;
+        // MobileUO: Switched to fixed since InlineArray is C#12
+        public unsafe fixed int ReplacedAnimations[AnimationsLoader.MAX_ACTIONS];
         public sbyte HeightOffset;
     }
 

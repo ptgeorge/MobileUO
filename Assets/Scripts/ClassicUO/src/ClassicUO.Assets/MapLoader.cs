@@ -673,17 +673,22 @@ namespace ClassicUO.Assets
         public sbyte Z;
     }
 
+    // MobileUO: Switch to MarshalAs since InlineArray is C#12
+    /*
     [InlineArray(64)]
     public struct MapCellsArray
     {
         private MapCells _a0;
     }
+    */
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct MapBlock
     {
         public uint Header;
-        public unsafe MapCellsArray Cells;
+        // MobileUO: Switch to MarshalAs since InlineArray is C#12
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
+        public unsafe MapCells[] Cells;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]

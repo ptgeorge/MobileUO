@@ -270,6 +270,8 @@ namespace ClassicUO.Assets
     }
 
 
+    // MobileUO: Switched ColorTableArray to fixed and HuesBlockArray to MarshalAs since InlineArray is C#12
+    /*
     [InlineArray(32)]
     public struct ColorTableArray
     {
@@ -281,12 +283,14 @@ namespace ClassicUO.Assets
     {
         private HuesBlock _a0;
     }
+    */
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct HuesBlock
     {
-        public ColorTableArray ColorTable;
+        // MobileUO: Switch to fixed since InlineArray is C#12
+        public unsafe fixed ushort ColorTable[32];
         public ushort TableStart;
         public ushort TableEnd;
         public unsafe fixed byte Name[20];
@@ -296,13 +300,16 @@ namespace ClassicUO.Assets
     public struct HuesGroup
     {
         public uint Header;
-        public HuesBlockArray Entries;
+        // MobileUO: Switch to MarshalAs since InlineArray is C#12
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
+        public HuesBlock[] Entries;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct VerdataHuesBlock
     {
-        public ColorTableArray ColorTable;
+        // MobileUO: Switch to fixed since InlineArray is C#12
+        public unsafe fixed ushort ColorTable[32];
         public ushort TableStart;
         public ushort TableEnd;
         public unsafe fixed byte Name[20];
@@ -313,7 +320,9 @@ namespace ClassicUO.Assets
     public struct VerdataHuesGroup
     {
         public readonly uint Header;
-        public HuesBlockArray Entries;
+        // MobileUO: Switch to MarshalAs since InlineArray is C#12
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
+        public HuesBlock[] Entries;
     }
 
     public struct FloatHues
