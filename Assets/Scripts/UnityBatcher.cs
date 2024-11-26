@@ -41,6 +41,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // MobileUO: Imports
+using Texture = Microsoft.Xna.Framework.Graphics.Texture;
 using UnityEngine;
 using UnityEngine.Rendering;
 using BlendState = Microsoft.Xna.Framework.Graphics.BlendState;
@@ -49,11 +50,11 @@ using CompareFunction = Microsoft.Xna.Framework.Graphics.CompareFunction;
 using Quaternion = UnityEngine.Quaternion;
 using Texture2D = Microsoft.Xna.Framework.Graphics.Texture2D;
 using UnityTexture = UnityEngine.Texture;
-using Vector2 = UnityEngine.Vector2;
-using Vector3 = UnityEngine.Vector3;
-using Vector4 = UnityEngine.Vector4;
-using XnaVector2 = Microsoft.Xna.Framework.Vector2;
-using XnaVector3 = Microsoft.Xna.Framework.Vector3;
+using UnityVector2 = UnityEngine.Vector2;
+using UnityVector3 = UnityEngine.Vector3;
+using UnityVector4 = UnityEngine.Vector4;
+using Vector2 = Microsoft.Xna.Framework.Vector2;
+using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace ClassicUO.Renderer
 {
@@ -187,12 +188,12 @@ namespace ClassicUO.Renderer
             _basicUOEffect.Brighlight.SetValue(f);
         }
 
-        // MobileUO: Switched from Vector3 to XnaVector3
-        public void DrawString(SpriteFont spriteFont, ReadOnlySpan<char> text, int x, int y, ref XnaVector3 color)
+        // MobileUO: Added ref to Vector#
+        public void DrawString(SpriteFont spriteFont, ReadOnlySpan<char> text, int x, int y, ref Vector3 color)
             => DrawString(spriteFont, text, new Vector2(x, y), color);
 
-        // MobileUO: Switched from Vector2/3 to XnaVector2/3
-        public void DrawString(SpriteFont spriteFont, ReadOnlySpan<char> text, ref XnaVector2 position, ref XnaVector3 color)
+        // MobileUO: Added ref to Vector#
+        public void DrawString(SpriteFont spriteFont, ReadOnlySpan<char> text, ref Vector2 position, ref Vector3 color)
         {
             if (text.IsEmpty)
             {
@@ -205,16 +206,13 @@ namespace ClassicUO.Renderer
             Texture2D textureValue = spriteFont.Texture;
             List<Rectangle> glyphData = spriteFont.GlyphData;
             List<Rectangle> croppingData = spriteFont.CroppingData;
-            // MobileUO: Switched from Vector3 to XnaVector3
-            List<XnaVector3> kerning = spriteFont.Kerning;
+            List<Vector3> kerning = spriteFont.Kerning;
             List<char> characterMap = spriteFont.CharacterMap;
 
-            // MobileUO: Switched from Vector2 to XnaVector2
-            XnaVector2 curOffset = XnaVector2.Zero;
+            Vector2 curOffset = Vector2.Zero;
             bool firstInLine = true;
 
-            // MobileUO: Switched from Vector2 to XnaVector2
-            XnaVector2 baseOffset = XnaVector2.Zero;
+            Vector2 baseOffset = Vector2.Zero;
             float axisDirX = 1;
             float axisDirY = 1;
 
@@ -261,8 +259,7 @@ namespace ClassicUO.Renderer
 				 * rightward, even if the kerning pushes the character to the
 				 * left.
 				 */
-                // MobileUO: Switched from Vector3 to XnaVector3
-                XnaVector3 cKern = kerning[index];
+                Vector3 cKern = kerning[index];
 
                 if (firstInLine)
                 {
@@ -1103,7 +1100,7 @@ namespace ClassicUO.Renderer
             ++_numSprites;
         }
 
-        private void RenderVertex(PositionTextureColor4 vertex, Texture2D texture, Vector3 hue)
+        private void RenderVertex(PositionNormalTextureColor4 vertex, Texture2D texture, UnityVector3 hue)
         {
             // MobileUO: Specific to MUO/Unity
             vertex.Position0 *= scale;
@@ -1118,7 +1115,7 @@ namespace ClassicUO.Renderer
             mat.SetColor(Hue, new Color(hue.x,hue.y,hue.z));
             mat.SetPass(0);
 
-            Graphics.DrawMeshNow(reusedMesh.Mesh, Vector3.zero, Quaternion.identity);
+            Graphics.DrawMeshNow(reusedMesh.Mesh, UnityVector3.zero, Quaternion.identity);
         }
 
         [MethodImpl(256)]
@@ -1589,8 +1586,9 @@ namespace ClassicUO.Renderer
             }
         }
 
+        // MobileUO: Switched from private to public
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        private struct PositionNormalTextureColor4 : IVertexType
+        public struct PositionNormalTextureColor4 : IVertexType
         {
             public Vector3 Position0;
             public Vector3 Normal0;
