@@ -15,3 +15,6 @@
 [submodule "external/SixLabors.ImageSharp"]
 	path = external/SixLabors.ImageSharp
 	url = https://github.com/SixLabors/ImageSharp.git
+[submodule "external/UnityXNA"]
+	path = external/UnityXNA
+	url = https://github.com/mvi/UnityXNA.git

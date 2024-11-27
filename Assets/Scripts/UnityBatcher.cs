@@ -41,7 +41,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // MobileUO: Imports
-using Texture = Microsoft.Xna.Framework.Graphics.Texture;
 using UnityEngine;
 using UnityEngine.Rendering;
 using BlendState = Microsoft.Xna.Framework.Graphics.BlendState;
@@ -49,6 +48,7 @@ using CullMode = Microsoft.Xna.Framework.Graphics.CullMode;
 using Color = UnityEngine.Color;
 using CompareFunction = Microsoft.Xna.Framework.Graphics.CompareFunction;
 using Quaternion = UnityEngine.Quaternion;
+using PrimitiveType = Microsoft.Xna.Framework.Graphics.PrimitiveType;
 using Texture2D = Microsoft.Xna.Framework.Graphics.Texture2D;
 using UnityTexture = UnityEngine.Texture;
 using UnityVector2 = UnityEngine.Vector2;
@@ -106,7 +106,7 @@ namespace ClassicUO.Renderer
         // MobileUO: Class members
         private Material hueMaterial;
         private Material xbrMaterial;
-        private MeshHolder reusedMesh = new MeshHolder(1);
+        //private MeshHolder reusedMesh = new MeshHolder(1);
 
         public float scale = 1;
         
@@ -1104,6 +1104,8 @@ namespace ClassicUO.Renderer
             ++_numSprites;
         }
 
+        // MobileUO: Specific to MUO/Unity ... don't think its needed
+        /*
         private void RenderVertex(PositionNormalTextureColor4 vertex, Texture2D texture, UnityVector3 hue)
         {
             // MobileUO: Specific to MUO/Unity
@@ -1121,8 +1123,8 @@ namespace ClassicUO.Renderer
 
             Graphics.DrawMeshNow(reusedMesh.Mesh, UnityVector3.zero, Quaternion.identity);
         }
+        */
 
-        [MethodImpl(256)]
         public void Begin()
         {
             // MobileUO: Switch from Begin to hueMaterial.SetTexture
@@ -1409,7 +1411,7 @@ namespace ClassicUO.Renderer
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void InternalDraw(Texture texture, int baseSprite, int batchSize)
+        private void InternalDraw(Texture2D texture, int baseSprite, int batchSize)
         {
             GraphicsDevice.Textures[0] = texture;
 
