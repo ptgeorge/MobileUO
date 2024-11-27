@@ -45,6 +45,7 @@ using Texture = Microsoft.Xna.Framework.Graphics.Texture;
 using UnityEngine;
 using UnityEngine.Rendering;
 using BlendState = Microsoft.Xna.Framework.Graphics.BlendState;
+using CullMode = Microsoft.Xna.Framework.Graphics.CullMode;
 using Color = UnityEngine.Color;
 using CompareFunction = Microsoft.Xna.Framework.Graphics.CompareFunction;
 using Quaternion = UnityEngine.Quaternion;
@@ -188,11 +189,14 @@ namespace ClassicUO.Renderer
             _basicUOEffect.Brighlight.SetValue(f);
         }
 
-        // MobileUO: Added ref to Vector#
+        // MobileUO: Added ref to Vector# and expanded to full method
         public void DrawString(SpriteFont spriteFont, ReadOnlySpan<char> text, int x, int y, ref Vector3 color)
-            => DrawString(spriteFont, text, new Vector2(x, y), color);
+        {
+            Vector2 vec = new Vector2(x, y);
+            DrawString(spriteFont, text, ref vec, ref color);
+        }
 
-        // MobileUO: Added ref to Vector#
+        // MobileUO: Added ref to position and Vector#
         public void DrawString(SpriteFont spriteFont, ReadOnlySpan<char> text, ref Vector2 position, ref Vector3 color)
         {
             if (text.IsEmpty)
